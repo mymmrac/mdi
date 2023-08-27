@@ -132,7 +132,7 @@ func (d *DI) provideFunction(function any, options []ProviderOption) error {
 		provided = true
 	}
 	if !provided {
-		return fmt.Errorf("can't declare func provider without return values")
+		return fmt.Errorf("can't add func provider %q without return values", vType.String())
 	}
 
 	return nil
@@ -185,7 +185,7 @@ func (d *DI) invoke(function any) ([]reflect.Value, error) {
 	}
 
 	if fType == nil || fType.Kind() != reflect.Func {
-		return nil, fmt.Errorf("can't invoke a non-function value")
+		return nil, fmt.Errorf("can't invoke a non-function or nil value")
 	}
 
 	paramValues := make([]reflect.Value, 0, fType.NumIn())
