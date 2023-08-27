@@ -69,7 +69,7 @@ func (d *DI) addProvider(pType reflect.Type, p *provider) error {
 
 	if _, ok := d.provide[pType]; ok {
 		d.provideMutex.Unlock()
-		return newErrorProviderAlreadyDeclared(pType)
+		return newErrorProviderAlreadyExists(pType)
 	}
 
 	d.provide[pType] = p
@@ -91,7 +91,7 @@ func (d *DI) canAddProvider(pType reflect.Type) (bool, error) {
 		return false, nil
 	}
 	if _, ok := d.getProvider(pType); ok {
-		return false, newErrorProviderAlreadyDeclared(pType)
+		return false, newErrorProviderAlreadyExists(pType)
 	}
 	return true, nil
 }
@@ -107,7 +107,7 @@ func (d *DI) provideValue(pValue reflect.Value, options []ProviderOption) error 
 
 	var err error
 	p := newProviderFromOptions(options)
-	if p.canRoundRobin {
+	if p.useRoundRobin {
 		if eType, ok := elementType(pType); ok {
 			err = d.addProvider(eType, p.setStrategyByValueRoundRobin(pValue))
 		} else {
@@ -148,7 +148,7 @@ func (d *DI) provideFunctionValue(function any, pType reflect.Type, index int, o
 
 	var err error
 	p := newProviderFromOptions(options)
-	if p.canRoundRobin {
+	if p.useRoundRobin {
 		if eType, ok := elementType(pType); ok {
 			err = d.addProvider(eType, p.setStrategyByFunctionValueRoundRobin(function, index))
 		} else {
@@ -157,8 +157,20 @@ func (d *DI) provideFunctionValue(function any, pType reflect.Type, index int, o
 	} else {
 		err = d.addProvider(pType, p.setStrategyByFunctionValue(function, index))
 	}
+	if err != nil {
+		return err
+	}
 
-	return err
+	if p.eagerLoading {
+		if _, err = p.provide(d); err != nil {
+			return fmt.Errorf("failed to eagerly load value of type %q: %w", pType, err)
+		}
+		if p.useRoundRobin {
+			p.roundRobinIndex--
+		}
+	}
+
+	return nil
 }
 
 // invoke calls function (or [reflect.Value] of kind [reflect.Func]) with dependencies provided from the container
@@ -208,15 +220,15 @@ func (d *DI) invokeParam(param reflect.Type, i int) (reflect.Value, error) {
 	return paramValue, nil
 }
 
-// newErrorProviderAlreadyDeclared returns an error indicating that the provider of this type is already declared
-func newErrorProviderAlreadyDeclared(pType reflect.Type) error {
-	return fmt.Errorf("provider of type %q is already declared", pType.String())
+// newErrorProviderAlreadyExists returns an error indicating that the provider of this type already exists
+func newErrorProviderAlreadyExists(pType reflect.Type) error {
+	return fmt.Errorf("provider of type %q already exists", pType.String())
 }
 
 // newErrorProviderCantRoundRobin returns an error indicating that the provider of this type is not suitable for
 // round-robin
 func newErrorProviderCantRoundRobin(pType reflect.Type) error {
-	return fmt.Errorf("can't round-robin value of type %q, not slice or array", pType.String())
+	return fmt.Errorf("can't round-robin value of type %q, must be a slice or an array", pType.String())
 }
 
 // elementType returns type of element if the type is (pointer to) slice or array

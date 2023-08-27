@@ -3,16 +3,23 @@ package mdi
 // ProviderOption represents provider options
 type ProviderOption func(p *provider)
 
-// WithMultiInstance provider's option multi instance (without cache)
-func WithMultiInstance() ProviderOption {
+// WithEagerLoading provider's option to eager load dependency even if not used
+func WithEagerLoading() ProviderOption {
 	return func(p *provider) {
-		p.canCache = false
+		p.eagerLoading = true
 	}
 }
 
-// WithRoundRobin provider's option for round-robin
+// WithMultiInstance provider's option to use multiple instances (without caching)
+func WithMultiInstance() ProviderOption {
+	return func(p *provider) {
+		p.disableCache = true
+	}
+}
+
+// WithRoundRobin provider's option for round-robin dependency
 func WithRoundRobin() ProviderOption {
 	return func(p *provider) {
-		p.canRoundRobin = true
+		p.useRoundRobin = true
 	}
 }

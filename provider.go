@@ -13,9 +13,7 @@ type invoker func(*provider, *DI) (reflect.Value, error)
 
 // newProviderFromOptions creates a new provider applying all options
 func newProviderFromOptions(options []ProviderOption) *provider {
-	p := &provider{
-		canCache: true,
-	}
+	p := &provider{}
 	for _, option := range options {
 		option(p)
 	}
@@ -24,8 +22,9 @@ func newProviderFromOptions(options []ProviderOption) *provider {
 
 // provider represents one dependency provider
 type provider struct {
-	canCache           bool
-	canRoundRobin      bool
+	eagerLoading       bool
+	disableCache       bool
+	useRoundRobin      bool
 	roundRobinIndex    int
 	cache              reflect.Value
 	invoker            invoker
@@ -108,7 +107,7 @@ func (p *provider) setStrategyByFunctionValueRoundRobin(function any, index int)
 func (p *provider) getCacheOrFunction() (reflect.Value, any) {
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
-	if !p.canCache {
+	if p.disableCache {
 		return reflect.Value{}, p.function
 	}
 	return p.cache, p.function
@@ -116,7 +115,7 @@ func (p *provider) getCacheOrFunction() (reflect.Value, any) {
 
 // setCache sets data into cache
 func (p *provider) setCache(data reflect.Value) {
-	if !p.canCache {
+	if p.disableCache {
 		return
 	}
 	p.mutex.Lock()
