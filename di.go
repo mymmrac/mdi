@@ -173,7 +173,7 @@ func (d *DI) invoke(function any) ([]reflect.Value, error) {
 	}
 
 	if fType == nil || fType.Kind() != reflect.Func {
-		return nil, fmt.Errorf("can't invoke not a function")
+		return nil, fmt.Errorf("can't invoke a non-function value")
 	}
 
 	paramValues := make([]reflect.Value, 0, fType.NumIn())
@@ -195,9 +195,17 @@ func (d *DI) invokeParam(param reflect.Type, i int) (reflect.Value, error) {
 		if d.parent != nil {
 			return d.parent.invokeParam(param, i)
 		}
-		return reflect.Value{}, fmt.Errorf("not found provider for %d parameter of type %q", i, param.String())
+		return reflect.Value{}, fmt.Errorf("not found provider for %d parameter of type %q",
+			i+1, param.String())
 	}
-	return p.provide(d)
+
+	paramValue, err := p.provide(d)
+	if err != nil {
+		return reflect.Value{}, fmt.Errorf("failed to provide %d parameter of type %q: %w",
+			i+1, param.String(), err)
+	}
+
+	return paramValue, nil
 }
 
 // newErrorProviderAlreadyDeclared returns an error indicating that the provider of this type is already declared
