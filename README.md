@@ -1,5 +1,10 @@
 # :paperclips: mDI • Go Dependency Injection
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/mymmrac/mdi#section-readme.svg)](https://pkg.go.dev/github.com/mymmrac/mdi)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/mymmrac/mdi?logo=go)](go.mod)
+[![CI Status](https://github.com/mymmrac/mdi/actions/workflows/ci.yml/badge.svg)](https://github.com/mymmrac/mdi/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/mymmrac/mdi)](https://goreportcard.com/report/github.com/mymmrac/mdi)
+
 mDI is a zero dependency reflection-based dependency injection library for Go
 
 ## :zap: Usage
